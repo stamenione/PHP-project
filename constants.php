@@ -12,7 +12,7 @@ define("COL_ACCOUNT_NAME", "name");
 define("COL_ACCOUNT_SURNAME", "surname");
 define("COL_ACCOUNT_ROLE_ID","role_id");
 
-define("TBL_ROLE", "admin");
+define("TBL_ROLE", "role");
 define("COL_ROLE_ID", "id");
 define("COL_ROLE_NAME", "role_name");
 

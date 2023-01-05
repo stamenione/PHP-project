@@ -103,7 +103,7 @@ class Database
 
     public function updateArticle($id,$name,$price,$quantity,$description,$way_of_use,$image,$article_type){
         try {
-            $sql = "UPDATE " . TBL_ARTICLE . "SET ".
+            $sql = "UPDATE " . TBL_ARTICLE . " SET ".
                    COL_ARTICLE_NAME. "=:name ". "," .COL_ARTICLE_PRICE."=:price ". ","
                     .COL_ARTICLE_DESCRIPTION."=:description ". ","
                     .COL_ARTICLE_WAY_OF_USE."=:way_of_use ". ","
@@ -163,8 +163,74 @@ class Database
         }
     }
 
-    /*ORDER AND ORDER ITEM*/
-    public function createOrderAndOrderItems(array $articles){
+    /*
 
+     array(
+            1 => article,
+            2 => article
+      )
+
+     */
+
+
+    /*ORDER AND ORDER ITEM*/
+    public function createOrderArticle(array $articles,$idKupca){
+        try {
+
+            $sql = "SELECT * FROM " . TBL_ORDER . "WHERE " . COL_ORDER_ACCOUNT_ID . " := account_id" . " AND " . COL_ORDER_AMOUNT . " =:total_amount";
+            $st = $this->conn->prepare($sql);
+            $st->bindValue("account_id",$idKupca,PDO::PARAM_INT);
+            $st->bindValue("total_amount",0,PDO::PARAM_STR);
+
+            //Order $o = $st->execute();
+            $total_amount_in_order = 0;
+
+            foreach ($articles as $key => $value){
+                $sql = "INSERT INTO " . TBL_ORDERARTICLE . " (".
+                        COL_ORDERARTICLE_ARTICLEID . ", ".
+                        COL_ORDERARTICLE_ORDERID . ", ".
+                        COL_ORDERARTICLE_AMOUNT . ", ".
+                        COL_ORDERARTICLE_PRICE . ", ".
+                        COL_ORDERARTICLE_QUANTITY .") "
+                    ."VALUES(:article_id,:order_id,:total_amount,:price,:quantity)";
+
+                $st = $this->conn->prepare($sql);
+                $st->bindValue("article_id",$value.article_id,PDO::PARAM_INT);
+               // $st->bindValue("order_id", $value.order_id,PDO::PARAM_INT);
+                $st->bindValue("total_amount",$value.price*$value.quantity,PDO::PARAM_STR);
+                $st->bindValue("price",$value.price,PDO::PARAM_STR);
+                $st->bindValue("quantity",$value.quantity,PDO::PARAM_INT);
+                $st->execute();
+
+                $total_amount_in_order = $total_amount_in_order + ($value.price*$value.quantity);
+            }
+
+            $sql1 = "UPDATE " . TBL_ORDER . " SET ". COL_ORDER_AMOUNT ."=:total_amount" .
+                " WHERE " .COL_ORDER_ID . "=:order_id";
+
+            $st1 = $this->conn->prepare($sql1);
+            $st1->bindValue("total_amount", $total_amount_in_order,PDO::PARAM_STR);
+            //$st1->bindValue("order_id",,PDO::PARAM_INT);
+            $st1->execute();
+
+        }catch (PDOException $e){
+            return false;
+        }
     }
+
+
+    public function createOrder($idKupca){
+        try {
+            $sql = "INSERT INTO " .TBL_ORDER . " (". COL_ORDER_AMOUNT .",". COL_ORDER_ACCOUNT_ID .") "
+                    ."VALUES (:total_amount,:idKupca)";
+            $st = $this->conn->prepare($sql);
+            $st->bindValue("idKupca",$idKupca,PDO::PARAM_INT);
+            $st->bindValue("total_amount",0,PDO::PARAM_STR);
+            $st->execute();
+        }catch (PDOException $e){
+            return false;
+        }
+    }
+
+
 }
